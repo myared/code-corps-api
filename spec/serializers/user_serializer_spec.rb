@@ -26,11 +26,11 @@
 
 require "rails_helper"
 
-describe UserSerializer, :type => :serializer do
-
+describe UserSerializer, type: :serializer do
   context "individual resource representation" do
-    let(:resource) {
-      user = create(:user,
+    let(:resource) do
+      user = create(
+        :user,
         email: "user@mail.com",
         name: "Josh Smith",
         username: "joshsmith",
@@ -46,14 +46,14 @@ describe UserSerializer, :type => :serializer do
       create(:organization_membership, organization: organization, member: user)
 
       user
-    }
+    end
 
     let(:serializer) { UserSerializer.new(resource) }
     let(:serialization) { ActiveModel::Serializer::Adapter.create(serializer) }
 
     context "root" do
       subject do
-        JSON.parse(serialization.to_json)['data']
+        JSON.parse(serialization.to_json)["data"]
       end
 
       it "has an attributes object" do
@@ -73,13 +73,9 @@ describe UserSerializer, :type => :serializer do
       end
     end
 
-    context 'attributes' do
+    context "attributes" do
       subject do
-        JSON.parse(serialization.to_json)['data']['attributes']
-      end
-
-      it "has an 'email'" do
-        expect(subject["email"]).to eq resource.email
+        JSON.parse(serialization.to_json)["data"]["attributes"]
       end
 
       it "has a 'username'" do
@@ -102,20 +98,44 @@ describe UserSerializer, :type => :serializer do
         expect(subject["biography"]).to eq resource.biography
       end
 
-      it "has a 'facebook_id'" do
-        expect(subject["facebook_id"]).to eq resource.facebook_id
-      end
-
-      it "has a 'facebook_access_token'" do
-        expect(subject["facebook_access_token"]).to eq resource.facebook_access_token
-      end
-
       it "has a 'photo_thumb_url'" do
         expect(subject["photo_thumb_url"]).to eq resource.photo.url(:thumb)
       end
 
       it "has a 'photo_large_url'" do
         expect(subject["photo_large_url"]).to eq resource.photo.url(:large)
+      end
+
+      context "when not the current user" do
+        it "does not expose 'email'" do
+          expect(subject["email"]).to be_nil
+        end
+
+        it "does not expose 'facebook_id'" do
+          expect(subject["facebook_id"]).to be_nil
+        end
+
+        it "does not expose 'facebook_access_token'" do
+          expect(subject["facebook_access_token"]).to be_nil
+        end
+      end
+
+      context "when is the current user" do
+        before do
+          serializer.scope = resource
+        end
+
+        it "has an 'email'" do
+          expect(subject["email"]).to eq resource.email
+        end
+
+        it "has a 'facebook_id'" do
+          expect(subject["facebook_id"]).to eq resource.facebook_id
+        end
+
+        it "has a 'facebook_access_token'" do
+          expect(subject["facebook_access_token"]).to eq resource.facebook_access_token
+        end
       end
     end
 

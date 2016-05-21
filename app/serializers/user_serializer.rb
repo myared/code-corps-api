@@ -39,4 +39,26 @@ class UserSerializer < ActiveModel::Serializer
   def photo_large_url
     object.photo.url(:large)
   end
+
+  def email
+    serialize_if_current_user(object.email)
+  end
+
+  def facebook_id
+    serialize_if_current_user(object.facebook_id)
+  end
+
+  def facebook_access_token
+    serialize_if_current_user(object.facebook_access_token)
+  end
+
+  private
+
+    def serialize_if_current_user(attribute)
+      is_current_user? ? attribute : nil
+    end
+
+    def is_current_user?
+      object == scope
+    end
 end
