@@ -92,11 +92,10 @@ describe "Comments API" do
         end
 
         it "creates a draft" do
-          make_request_with_sidekiq_inline params
-
           # Analytics
-          expect_any_instance_of(Segment::Analytics).
-            to receive(:track)#.with(user_id: user.id, event: "Comment Created")
+          expect_any_instance_of(Analytics).to receive(:track_comment_previewed_draft)
+
+          make_request_with_sidekiq_inline params
 
           comment = Comment.last
 
@@ -130,6 +129,9 @@ describe "Comments API" do
 
       context "when requesting an actual save" do
         it "creates a published comment" do
+          # Analytics
+          expect_any_instance_of(Analytics).to receive(:track_comment_created)
+
           make_request_with_sidekiq_inline params
 
           comment = Comment.last
@@ -192,8 +194,6 @@ describe "Comments API" do
           expect(json).to be_a_valid_json_api_validation_error
         end
       end
-
-
     end
   end
 
@@ -256,6 +256,9 @@ describe "Comments API" do
           end
 
           it "updates the draft" do
+            # Analytics
+            expect_any_instance_of(Analytics).to receive(:track_comment_previewed_existing)
+
             make_request_with_sidekiq_inline params
 
             # response is correct
@@ -288,6 +291,9 @@ describe "Comments API" do
 
         context "when requesting an actual save" do
           it "updates and publishes comment" do
+            # Analytics
+            expect_any_instance_of(Analytics).to receive(:track_comment_updated)
+
             params[:data][:attributes][:publish] = true
             make_request_with_sidekiq_inline params
 

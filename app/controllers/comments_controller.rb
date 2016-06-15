@@ -39,10 +39,10 @@ class CommentsController < ApplicationController
 
     if comment.update(publish?)
       if publish?
-        track("Created Comment")
+        analytics.track_comment_created
         GenerateCommentUserNotificationsWorker.perform_async(comment.id)
       else
-        track("Previewed New Comment")
+        analytics.track_comment_previewed_draft
       end
       render json: comment
     else
@@ -59,10 +59,10 @@ class CommentsController < ApplicationController
 
     if comment.update(publish?)
       if publish?
-        track("Updated Comment")
+        analytics.track_comment_updated
         GenerateCommentUserNotificationsWorker.perform_async(comment.id)
       else
-        track("Previewed Existing Comment")
+        analytics.track_comment_previewed_existing
       end
       render json: comment
     else
@@ -86,12 +86,5 @@ class CommentsController < ApplicationController
 
     def update_params
       permitted_params
-    end
-
-    def track(event_name)
-      analytics.track(
-        user_id: current_user.id,
-        event: event_name
-      )
     end
 end

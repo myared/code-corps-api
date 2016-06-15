@@ -32,7 +32,7 @@ class ApplicationController < ActionController::API
   end
 
   def analytics
-    @analytics ||= CodeCorps::Analytics.new(current_user)
+    @analytics ||= Analytics.new(current_user)
   end
 
   def page_size
