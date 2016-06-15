@@ -2,7 +2,6 @@ class ApplicationController < ActionController::API
   include Clearance::Controller
   include Pundit
 
-  before_action :identify_for_analytics
   before_action :set_default_response_format
   before_action :set_raven_context
 
@@ -30,6 +29,10 @@ class ApplicationController < ActionController::API
 
   def current_user
     current_resource_owner
+  end
+
+  def analytics
+    @analytics ||= CodeCorps::Analytics.new(current_user)
   end
 
   def page_size
@@ -78,36 +81,10 @@ class ApplicationController < ActionController::API
     params.merge(user_id: current_user.id)
   end
 
-  def analytics
-    @analytics ||= Segment::Analytics.new(
-      stub: stub_analytics,
-      write_key: segment_write_key
-    )
-  end
-
   private
 
     def current_resource_owner
       User.find(doorkeeper_token.resource_owner_id) if doorkeeper_token
-    end
-
-    def identify_for_analytics
-      if signed_in?
-        analytics.identify(
-          user_id: current_user.id,
-          traits: {
-            admin: current_user.admin,
-            biography: current_user.biography,
-            created_at: current_user.created_at,
-            email: current_user.email,
-            facebook_id: current_user.facebook_id,
-            name: current_user.name,
-            state: current_user.state,
-            twitter: current_user.twitter,
-            username: current_user.username,
-          }
-        )
-      end
     end
 
     def set_default_response_format
@@ -118,13 +95,5 @@ class ApplicationController < ActionController::API
       if signed_in?
         Raven.user_context(id: current_user.id)
       end
-    end
-
-    def segment_write_key
-      @segment_write_key ||= (ENV["SEGMENT_WRITE_KEY"] || "")
-    end
-
-    def stub_analytics
-      @stub_analytics ||= Rails.env.test? || ENV["SEGMENT_WRITE_KEY"].blank?
     end
 end
