@@ -94,6 +94,10 @@ describe "Comments API" do
         it "creates a draft" do
           make_request_with_sidekiq_inline params
 
+          # Analytics
+          expect_any_instance_of(Segment::Analytics).
+            to receive(:track)#.with(user_id: user.id, event: "Comment Created")
+
           comment = Comment.last
 
           # response is correct
